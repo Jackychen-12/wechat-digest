@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公众号推送整理与总结助手</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>公众号推送整理与总结助手</h1>
+      <p>录入每日推送文章，并通过自然语言一键总结。</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1) 添加公众号与文章</h2>
+        <form id="article-form">
+          <div class="grid">
+            <label>
+              公众号名称
+              <input id="account" required placeholder="例如：XX财经观察" />
+            </label>
+            <label>
+              推送日期
+              <input id="publish-date" type="date" required />
+            </label>
+            <label class="span-2">
+              文章标题
+              <input id="title" required placeholder="输入文章标题" />
+            </label>
+            <label class="span-2">
+              原文链接（可选）
+              <input id="url" type="url" placeholder="https://..." />
+            </label>
+            <label class="span-2">
+              文章内容
+              <textarea id="content" rows="6" required placeholder="粘贴文章全文，便于后续自然语言总结"></textarea>
+            </label>
+          </div>
+          <button type="submit">保存文章</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>2) 文章库</h2>
+        <div class="toolbar">
+          <input id="keyword" placeholder="按标题或内容关键词筛选" />
+          <input id="filter-date" type="date" />
+          <input id="filter-account" placeholder="按公众号筛选" />
+          <button id="clear-filters" type="button">清空筛选</button>
+        </div>
+        <ul id="article-list" class="article-list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>3) 自然语言总结</h2>
+        <p class="tip">先在文章库中选择一篇文章，再输入你的需求，例如：“请用三点总结这篇文章，并给出行动建议”。</p>
+        <label>
+          你的指令
+          <textarea id="prompt" rows="3" placeholder="例如：提炼核心观点并输出 120 字摘要"></textarea>
+        </label>
+        <button id="summarize-btn" type="button">生成总结</button>
+        <div id="summary-output" class="summary-output"></div>
+      </section>
+    </main>
+
+    <template id="article-item-template">
+      <li class="article-item">
+        <label>
+          <input type="radio" name="selected-article" />
+          <span class="meta"></span>
+        </label>
+        <h3 class="title"></h3>
+        <p class="preview"></p>
+        <div class="actions">
+          <a class="url" target="_blank" rel="noopener noreferrer">查看原文</a>
+          <button type="button" class="delete-btn">删除</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
