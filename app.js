@@ -4,6 +4,11 @@ const FETCH_TIMEOUT_MS = 10000;
 
 const articleList = document.getElementById("article-list");
 const accountResults = document.getElementById("account-results");
+const previewPanel = document.getElementById("preview-panel");
+const previewFrame = document.getElementById("preview-frame");
+const previewTitle = document.getElementById("preview-title");
+const previewOpen = document.getElementById("preview-open");
+const previewToggle = document.getElementById("preview-toggle");
 const template = document.getElementById("article-item-template");
 const summaryOutput = document.getElementById("summary-output");
 const fetchStatus = document.getElementById("fetch-status");
@@ -22,6 +27,8 @@ const fetchAccountBtn = document.getElementById("fetch-account-btn");
 
 let articles = loadArticles();
 renderArticles();
+
+previewToggle.addEventListener("click", () => hidePreview());
 
 fetchArticleBtn.addEventListener("click", async () => {
   const url = articleUrlInput.value.trim();
@@ -168,6 +175,7 @@ function renderAccountResults(entries, accountName = "") {
   accountResults.innerHTML = "";
   if (!entries.length) {
     accountResults.innerHTML = `<li><span class="result-title">${accountName ? `“${accountName}”暂无结果` : "暂无结果"}</span></li>`;
+    hidePreview();
     return;
   }
 
@@ -176,6 +184,16 @@ function renderAccountResults(entries, accountName = "") {
     const title = document.createElement("div");
     title.className = "result-title";
     title.innerHTML = `<strong>${escapeHtml(entry.title)}</strong><br><a href="${entry.url}" target="_blank" rel="noopener noreferrer">${entry.url}</a>`;
+
+    const actionWrap = document.createElement("div");
+    actionWrap.style.display = "flex";
+    actionWrap.style.gap = "6px";
+
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = "small-btn";
+    previewBtn.textContent = "预览";
+    previewBtn.addEventListener("click", () => showPreview(entry.title, entry.url));
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -196,10 +214,26 @@ function renderAccountResults(entries, accountName = "") {
       }
     });
 
+    actionWrap.appendChild(previewBtn);
+    actionWrap.appendChild(btn);
     li.appendChild(title);
-    li.appendChild(btn);
+    li.appendChild(actionWrap);
     accountResults.appendChild(li);
   });
+}
+
+
+function showPreview(title, url) {
+  previewTitle.textContent = `文章预览：${title}`;
+  previewOpen.href = url;
+  previewFrame.src = url;
+  previewPanel.classList.remove("hidden");
+  previewToggle.textContent = "收回预览";
+}
+
+function hidePreview() {
+  previewPanel.classList.add("hidden");
+  previewFrame.src = "about:blank";
 }
 
 function escapeHtml(text) {

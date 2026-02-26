@@ -35,6 +35,17 @@
           <h3>公众号文章列表</h3>
           <ul id="account-results" class="account-results"></ul>
         </div>
+
+        <div id="preview-panel" class="preview-panel hidden">
+          <div class="preview-header">
+            <strong id="preview-title">文章预览</strong>
+            <div class="preview-actions">
+              <a id="preview-open" target="_blank" rel="noopener noreferrer">新窗口打开</a>
+              <button id="preview-toggle" type="button">收回预览</button>
+            </div>
+          </div>
+          <iframe id="preview-frame" title="文章预览" loading="lazy"></iframe>
+        </div>
       </section>
 
       <section class="card">
