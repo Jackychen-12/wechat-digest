@@ -1,0 +1,150 @@
+:root {
+  color-scheme: light;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: #f2f5f9;
+  color: #111827;
+}
+
+header {
+  background: #0f766e;
+  color: #fff;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+main {
+  max-width: 960px;
+  margin: 1.2rem auto 2rem;
+  padding: 0 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  padding: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.95rem;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  padding: 0.55rem 0.9rem;
+}
+
+button:hover {
+  background: #115e59;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.article-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.article-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fcfffe;
+}
+
+.article-item .meta {
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.article-item .title {
+  margin: 0.4rem 0;
+  font-size: 1.05rem;
+}
+
+.preview {
+  margin: 0.4rem 0;
+  color: #475569;
+}
+
+.actions {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.actions .url {
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.tip {
+  color: #475569;
+  margin-top: 0;
+}
+
+.summary-output {
+  margin-top: 0.8rem;
+  white-space: pre-wrap;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.8rem;
+  min-height: 72px;
+}
+
+@media (max-width: 700px) {
+  .grid,
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: span 1;
+  }
+}

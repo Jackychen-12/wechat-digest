@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公众号推送整理与总结助手</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>公众号推送整理与总结助手</h1>
+      <p>输入文章链接或公众号名称，自动抓取并整理，再用自然语言总结。</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1) 自动采集</h2>
+        <div class="grid">
+          <label class="span-2">
+            文章地址（推荐）
+            <input id="article-url-input" placeholder="https://mp.weixin.qq.com/s/..." />
+          </label>
+          <button id="fetch-article-btn" type="button">抓取该文章</button>
+
+          <label class="span-2">
+            公众号名称（实验功能）
+            <input id="account-name-input" placeholder="例如：腾讯研究院" />
+          </label>
+          <button id="fetch-account-btn" type="button">抓取最近文章</button>
+        </div>
+        <p class="tip">说明：链接抓取成功率高；公众号名称抓取依赖第三方检索页面，成功率受网络与站点策略影响。</p>
+        <div id="fetch-status" class="summary-output"></div>
+      </section>
+
+      <section class="card">
+        <h2>2) 文章库</h2>
+        <div class="toolbar">
+          <input id="keyword" placeholder="按标题或内容关键词筛选" />
+          <input id="filter-date" type="date" />
+          <input id="filter-account" placeholder="按公众号筛选" />
+          <button id="clear-filters" type="button">清空筛选</button>
+        </div>
+        <ul id="article-list" class="article-list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>3) 自然语言总结</h2>
+        <p class="tip">先在文章库中选择一篇文章，再输入你的需求，例如：“请用三点总结这篇文章，并给出行动建议”。</p>
+        <label>
+          你的指令
+          <textarea id="prompt" rows="3" placeholder="例如：提炼核心观点并输出 120 字摘要"></textarea>
+        </label>
+        <button id="summarize-btn" type="button">生成总结</button>
+        <div id="summary-output" class="summary-output"></div>
+      </section>
+    </main>
+
+    <template id="article-item-template">
+      <li class="article-item">
+        <label>
+          <input type="radio" name="selected-article" />
+          <span class="meta"></span>
+        </label>
+        <h3 class="title"></h3>
+        <p class="preview"></p>
+        <div class="actions">
+          <a class="url" target="_blank" rel="noopener noreferrer">查看原文</a>
+          <button type="button" class="delete-btn">删除</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
