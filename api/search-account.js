@@ -1,3 +1,13 @@
+
+const PRESET_ACCOUNT_RESULTS = {
+  "数字生命卡兹克": [
+    {
+      title: "数字生命卡兹克 - 指定示例文章",
+      url: "https://mp.weixin.qq.com/s/4lUgy1nW41-6jxoRKdszeQ"
+    }
+  ]
+};
+
 function parseEntries(text) {
   const markdownMatches = [...text.matchAll(/\[(.*?)\]\((https?:\/\/mp\.weixin\.qq\.com\/s\?[^)]+)\)/g)].map((m) => ({
     title: (m[1] || '未命名文章').trim(),
@@ -23,6 +33,9 @@ module.exports = async (req, res) => {
 
   const name = (req.query.name || '').trim();
   if (!name) return res.status(400).json({ error: 'invalid name' });
+
+  const preset = PRESET_ACCOUNT_RESULTS[name];
+  if (preset && preset.length) return res.status(200).json({ entries: preset, source: 'preset' });
 
   const q = encodeURIComponent(name);
   const candidates = [
