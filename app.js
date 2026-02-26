@@ -35,7 +35,7 @@ fetchArticleBtn.addEventListener("click", async () => {
   if (!url) return setFetchStatus("请先输入文章地址。", true);
 
   toggleFetchButtons(true);
-  setFetchStatus("正在抓取文章（提速模式）...");
+  setFetchStatus("正在抓取文章（服务端代理优先）...");
 
   try {
     const article = await fetchAndParseArticle(url);
@@ -123,13 +123,29 @@ async function fetchWithTimeout(url) {
 
 async function fetchAndParseArticle(url, accountHint = "") {
   const normalizedUrl = normalizeUrl(url);
-  const readerUrl = toReaderUrl(normalizedUrl);
 
   let text = "";
+  let source = "";
   try {
-    text = await fetchWithTimeout(readerUrl);
+    const resp = await fetch(`/api/fetch-article?url=${encodeURIComponent(normalizedUrl)}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      text = data.text || "";
+      source = data.source || "";
+    }
   } catch {
-    text = await fetchWithTimeout(normalizedUrl);
+    // ignore and fallback below
+  }
+
+  if (!text) {
+    const readerUrl = toReaderUrl(normalizedUrl);
+    try {
+      text = await fetchWithTimeout(readerUrl);
+      source = readerUrl;
+    } catch {
+      text = await fetchWithTimeout(normalizedUrl);
+      source = normalizedUrl;
+    }
   }
 
   const title = extractTitle(text) || `未命名文章 ${new Date().toLocaleTimeString()}`;
@@ -143,11 +159,22 @@ async function fetchAndParseArticle(url, accountHint = "") {
     title,
     url: normalizedUrl,
     content,
+    source,
     createdAt: new Date().toISOString()
   };
 }
 
 async function fetchArticleEntriesByAccount(accountName) {
+  try {
+    const resp = await fetch(`/api/search-account?name=${encodeURIComponent(accountName)}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      if (Array.isArray(data.entries) && data.entries.length) return data.entries;
+    }
+  } catch {
+    // fallback below
+  }
+
   const query = encodeURIComponent(accountName);
   const searchUrl = toReaderUrl(`https://weixin.sogou.com/weixin?type=2&query=${query}`);
   const text = await fetchWithTimeout(searchUrl);
