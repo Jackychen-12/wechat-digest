@@ -1,6 +1,13 @@
 const STORAGE_KEY = "wechat_digest_articles";
 const READER_PREFIX = "https://r.jina.ai/http://";
 const FETCH_TIMEOUT_MS = 10000;
+const SEARCH_TIMEOUT_MS = 20000;
+
+const PRESET_ACCOUNT_RESULTS = {
+  "数字生命卡兹克": [
+    { title: "数字生命卡兹克 - 指定示例文章", url: "https://mp.weixin.qq.com/s/4lUgy1nW41-6jxoRKdszeQ" }
+  ]
+};
 
 const articleList = document.getElementById("article-list");
 const accountResults = document.getElementById("account-results");
@@ -62,7 +69,7 @@ fetchAccountBtn.addEventListener("click", async () => {
     renderAccountResults(entries, account);
     setFetchStatus(`已获取 ${entries.length} 篇候选文章，可点击链接或入库。`);
   } catch (error) {
-    setFetchStatus(`列表获取失败：${error.message}`, true);
+    setFetchStatus(`公众号抓取失败：${error.message}。建议使用 Vercel 部署地址访问，以启用服务端代理。`, true);
     renderAccountResults([], account);
   } finally {
     toggleFetchButtons(false);
@@ -105,9 +112,9 @@ function toReaderUrl(url) {
   return `${READER_PREFIX}${withoutProtocol}`;
 }
 
-async function fetchWithTimeout(url) {
+async function fetchWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const resp = await fetch(url, { signal: controller.signal });
     if (!resp.ok) throw new Error(`网络请求失败（${resp.status}）`);
@@ -165,6 +172,9 @@ async function fetchAndParseArticle(url, accountHint = "") {
 }
 
 async function fetchArticleEntriesByAccount(accountName) {
+  const preset = PRESET_ACCOUNT_RESULTS[accountName];
+  if (preset && preset.length) return preset;
+
   try {
     const resp = await fetch(`/api/search-account?name=${encodeURIComponent(accountName)}`);
     if (resp.ok) {
@@ -176,26 +186,48 @@ async function fetchArticleEntriesByAccount(accountName) {
   }
 
   const query = encodeURIComponent(accountName);
-  const searchUrl = toReaderUrl(`https://weixin.sogou.com/weixin?type=2&query=${query}`);
-  const text = await fetchWithTimeout(searchUrl);
+  const searchCandidates = [
+    toReaderUrl(`https://weixin.sogou.com/weixin?type=2&query=${query}`),
+    toReaderUrl(`https://weixin.sogou.com/weixin?query=${query}&type=2&ie=utf8`),
+    toReaderUrl(`https://www.sogou.com/web?query=site%3Amp.weixin.qq.com%20${query}`)
+  ];
 
-  const markdownMatches = [...text.matchAll(/\[(.*?)\]\((https?:\/\/mp\.weixin\.qq\.com\/s\?[^)]+)\)/g)].map((m) => ({
-    title: m[1].trim() || "未命名文章",
-    url: m[2].trim()
-  }));
+  let merged = [];
+  let lastError = null;
 
-  const plainLinks = [...text.matchAll(/https?:\/\/mp\.weixin\.qq\.com\/s\?[^\s)]+/g)].map((m) => ({
-    title: "公众号文章",
-    url: m[0]
-  }));
+  for (const searchUrl of searchCandidates) {
+    try {
+      const text = await fetchWithTimeout(searchUrl, SEARCH_TIMEOUT_MS);
 
-  const merged = [...markdownMatches, ...plainLinks];
+      const markdownMatches = [...text.matchAll(/\[(.*?)\]\((https?:\/\/mp\.weixin\.qq\.com\/s\?[^)]+)\)/g)].map((m) => ({
+        title: m[1].trim() || "未命名文章",
+        url: m[2].trim()
+      }));
+
+      const plainLinks = [...text.matchAll(/https?:\/\/mp\.weixin\.qq\.com\/s\?[^\s)]+/g)].map((m) => ({
+        title: "公众号文章",
+        url: m[0]
+      }));
+
+      merged = merged.concat(markdownMatches, plainLinks);
+      if (merged.length >= 5) break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
   const seen = new Set();
-  return merged.filter((item) => {
+  const result = merged.filter((item) => {
     if (seen.has(item.url)) return false;
     seen.add(item.url);
     return true;
   }).slice(0, 12);
+
+  if (!result.length) {
+    throw new Error(lastError?.message || "未检索到文章，请稍后重试或使用文章链接抓取");
+  }
+
+  return result;
 }
 
 function renderAccountResults(entries, accountName = "") {
