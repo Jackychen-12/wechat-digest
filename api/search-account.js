@@ -1,13 +1,3 @@
-
-const PRESET_ACCOUNT_RESULTS = {
-  "数字生命卡兹克": [
-    {
-      title: "数字生命卡兹克 - 指定示例文章",
-      url: "https://mp.weixin.qq.com/s/4lUgy1nW41-6jxoRKdszeQ"
-    }
-  ]
-};
-
 function parseEntries(text) {
   const markdownMatches = [...text.matchAll(/\[(.*?)\]\((https?:\/\/mp\.weixin\.qq\.com\/s\?[^)]+)\)/g)].map((m) => ({
     title: (m[1] || '未命名文章').trim(),
@@ -27,15 +17,24 @@ function parseEntries(text) {
   }).slice(0, 15);
 }
 
+async function fetchText(url, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { signal: controller.signal });
+    if (!resp.ok) throw new Error(`status ${resp.status}`);
+    return await resp.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const name = (req.query.name || '').trim();
   if (!name) return res.status(400).json({ error: 'invalid name' });
-
-  const preset = PRESET_ACCOUNT_RESULTS[name];
-  if (preset && preset.length) return res.status(200).json({ entries: preset, source: 'preset' });
 
   const q = encodeURIComponent(name);
   const candidates = [
@@ -45,35 +44,28 @@ module.exports = async (req, res) => {
     `https://r.jina.ai/http://www.sogou.com/web?query=site%3Amp.weixin.qq.com%20${q}`
   ];
 
-  let all = [];
-  let lastError = null;
-  for (const url of candidates) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15000);
-      const resp = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!resp.ok) throw new Error(`status ${resp.status}`);
-      const text = await resp.text();
-      all = all.concat(parseEntries(text));
-      if (all.length >= 5) break;
-    } catch (err) {
-      lastError = err;
+  try {
+    const results = await Promise.allSettled(candidates.map((url) => fetchText(url)));
+    let all = [];
+    for (const r of results) {
+      if (r.status === 'fulfilled') all = all.concat(parseEntries(r.value));
     }
-  }
 
-  const uniq = [];
-  const seen = new Set();
-  for (const it of all) {
-    if (!seen.has(it.url)) {
-      seen.add(it.url);
-      uniq.push(it);
+    const uniq = [];
+    const seen = new Set();
+    for (const it of all) {
+      if (!seen.has(it.url)) {
+        seen.add(it.url);
+        uniq.push(it);
+      }
     }
-  }
 
-  if (!uniq.length) {
-    return res.status(502).json({ error: lastError?.message || 'no entries found', entries: [] });
-  }
+    if (!uniq.length) {
+      return res.status(502).json({ error: 'no entries found', entries: [] });
+    }
 
-  return res.status(200).json({ entries: uniq.slice(0, 12) });
+    return res.status(200).json({ entries: uniq.slice(0, 12) });
+  } catch (error) {
+    return res.status(500).json({ error: error.message, entries: [] });
+  }
 };

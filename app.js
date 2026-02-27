@@ -3,11 +3,6 @@ const READER_PREFIX = "https://r.jina.ai/http://";
 const FETCH_TIMEOUT_MS = 10000;
 const SEARCH_TIMEOUT_MS = 20000;
 
-const PRESET_ACCOUNT_RESULTS = {
-  "数字生命卡兹克": [
-    { title: "数字生命卡兹克 - 指定示例文章", url: "https://mp.weixin.qq.com/s/4lUgy1nW41-6jxoRKdszeQ" }
-  ]
-};
 
 const articleList = document.getElementById("article-list");
 const accountResults = document.getElementById("account-results");
@@ -172,17 +167,21 @@ async function fetchAndParseArticle(url, accountHint = "") {
 }
 
 async function fetchArticleEntriesByAccount(accountName) {
-  const preset = PRESET_ACCOUNT_RESULTS[accountName];
-  if (preset && preset.length) return preset;
+  const apiUrl = `/api/search-account?name=${encodeURIComponent(accountName)}`;
 
   try {
-    const resp = await fetch(`/api/search-account?name=${encodeURIComponent(accountName)}`);
+    const resp = await fetch(apiUrl);
+    if (resp.status === 404) {
+      throw new Error("当前为静态模式，缺少 /api 服务。请用 Vercel 部署地址访问");
+    }
     if (resp.ok) {
       const data = await resp.json();
       if (Array.isArray(data.entries) && data.entries.length) return data.entries;
+      throw new Error("未检索到文章结果");
     }
-  } catch {
-    // fallback below
+  } catch (err) {
+    // continue to fallback below
+    if (String(err.message || "").includes("缺少 /api 服务")) throw err;
   }
 
   const query = encodeURIComponent(accountName);
@@ -192,27 +191,24 @@ async function fetchArticleEntriesByAccount(accountName) {
     toReaderUrl(`https://www.sogou.com/web?query=site%3Amp.weixin.qq.com%20${query}`)
   ];
 
+  const settled = await Promise.allSettled(searchCandidates.map((url) => fetchWithTimeout(url, SEARCH_TIMEOUT_MS)));
   let merged = [];
-  let lastError = null;
+  let hadTimeout = false;
 
-  for (const searchUrl of searchCandidates) {
-    try {
-      const text = await fetchWithTimeout(searchUrl, SEARCH_TIMEOUT_MS);
-
+  for (const r of settled) {
+    if (r.status === "fulfilled") {
+      const text = r.value;
       const markdownMatches = [...text.matchAll(/\[(.*?)\]\((https?:\/\/mp\.weixin\.qq\.com\/s\?[^)]+)\)/g)].map((m) => ({
         title: m[1].trim() || "未命名文章",
         url: m[2].trim()
       }));
-
       const plainLinks = [...text.matchAll(/https?:\/\/mp\.weixin\.qq\.com\/s\?[^\s)]+/g)].map((m) => ({
         title: "公众号文章",
         url: m[0]
       }));
-
       merged = merged.concat(markdownMatches, plainLinks);
-      if (merged.length >= 5) break;
-    } catch (err) {
-      lastError = err;
+    } else if (String(r.reason?.message || "").includes("超时")) {
+      hadTimeout = true;
     }
   }
 
@@ -224,7 +220,7 @@ async function fetchArticleEntriesByAccount(accountName) {
   }).slice(0, 12);
 
   if (!result.length) {
-    throw new Error(lastError?.message || "未检索到文章，请稍后重试或使用文章链接抓取");
+    throw new Error(hadTimeout ? "请求超时（第三方站点响应慢），请稍后重试" : "未检索到文章，请稍后重试或使用文章链接抓取");
   }
 
   return result;
