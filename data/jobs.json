@@ -1,0 +1,41 @@
+{
+  "updatedAt": "2026-06-18",
+  "jobs": [
+    {
+      "id": "tencent-pm-001",
+      "company": "腾讯",
+      "title": "暑期产品经理实习生",
+      "city": "深圳",
+      "type": "产品",
+      "publishDate": "2026-06-18",
+      "deadline": "2026-07-05",
+      "description": "参与校园产品需求调研与版本规划，协同研发推进功能上线。",
+      "tags": ["用户研究", "需求分析", "Axure"],
+      "url": "https://careers.tencent.com"
+    },
+    {
+      "id": "bytedance-algo-002",
+      "company": "字节跳动",
+      "title": "暑期算法实习生（推荐方向）",
+      "city": "北京",
+      "type": "算法",
+      "publishDate": "2026-06-18",
+      "deadline": "2026-07-10",
+      "description": "参与推荐系统召回与排序优化，完成特征工程与离线评估。",
+      "tags": ["Python", "机器学习", "推荐系统"],
+      "url": "https://jobs.bytedance.com"
+    },
+    {
+      "id": "pwc-finance-003",
+      "company": "普华永道",
+      "title": "财务咨询暑期实习生",
+      "city": "上海",
+      "type": "咨询",
+      "publishDate": "2026-06-17",
+      "deadline": "2026-07-08",
+      "description": "协助财务尽调与行业分析，支持咨询项目资料整理及报告撰写。",
+      "tags": ["Excel", "财务分析", "报告撰写"],
+      "url": "https://www.pwccn.com"
+    }
+  ]
+}
