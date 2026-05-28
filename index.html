@@ -4,15 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>公众号推送整理与总结助手</title>
+    <meta name="description" content="整理微信公众号推送文章，按公众号/日期筛选，使用 AI（OpenAI GPT）智能总结。" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
       <h1>公众号推送整理与总结助手</h1>
-      <p>录入每日推送文章，并通过自然语言一键总结。</p>
+      <p>录入 / 导入公众号文章，按关键词和日期筛选，AI 一键总结。</p>
     </header>
 
     <main>
+      <!-- API 设置 -->
+      <section class="card api-card">
+        <div class="api-header" id="api-toggle">
+          <h2>API 设置</h2>
+          <span class="api-status" id="api-status">未配置 — 使用本地摘要</span>
+          <button type="button" class="btn-sm" id="api-toggle-btn">展开</button>
+        </div>
+        <div class="api-body" id="api-body" style="display:none">
+          <p class="tip">填入 OpenAI API Key 后可使用 GPT 进行真正的智能总结。Key 仅存储在浏览器本地，不会上传到任何服务器。</p>
+          <div class="api-form">
+            <label>
+              OpenAI API Key
+              <input id="api-key" type="password" placeholder="sk-..." />
+            </label>
+            <label>
+              模型
+              <select id="api-model">
+                <option value="gpt-4o-mini">gpt-4o-mini（推荐，快且便宜）</option>
+                <option value="gpt-4o">gpt-4o（更强）</option>
+                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+              </select>
+            </label>
+            <div class="api-actions">
+              <button type="button" id="save-api" class="btn-primary">保存设置</button>
+              <button type="button" id="clear-api" class="btn-sm">清除 Key</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 添加文章 -->
       <section class="card">
         <h2>1) 添加公众号与文章</h2>
         <form id="article-form">
@@ -35,32 +67,39 @@
             </label>
             <label class="span-2">
               文章内容
-              <textarea id="content" rows="6" required placeholder="粘贴文章全文，便于后续自然语言总结"></textarea>
+              <textarea id="content" rows="6" required placeholder="粘贴文章全文，便于后续总结"></textarea>
             </label>
           </div>
-          <button type="submit">保存文章</button>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">保存文章</button>
+            <button type="button" id="load-demo" class="btn-sm">加载示例数据</button>
+            <button type="button" id="import-btn" class="btn-sm">批量导入 JSON</button>
+          </div>
         </form>
+        <input type="file" id="import-file" accept=".json" style="display:none" />
       </section>
 
+      <!-- 文章库 -->
       <section class="card">
-        <h2>2) 文章库</h2>
+        <h2>2) 文章库 <span class="badge" id="article-count">0</span></h2>
         <div class="toolbar">
           <input id="keyword" placeholder="按标题或内容关键词筛选" />
           <input id="filter-date" type="date" />
           <input id="filter-account" placeholder="按公众号筛选" />
-          <button id="clear-filters" type="button">清空筛选</button>
+          <button id="clear-filters" type="button" class="btn-sm">清空筛选</button>
         </div>
         <ul id="article-list" class="article-list"></ul>
       </section>
 
+      <!-- 自然语言总结 -->
       <section class="card">
-        <h2>3) 自然语言总结</h2>
-        <p class="tip">先在文章库中选择一篇文章，再输入你的需求，例如：“请用三点总结这篇文章，并给出行动建议”。</p>
+        <h2>3) AI 智能总结</h2>
+        <p class="tip">先在文章库中选择一篇文章，再输入你的需求。</p>
         <label>
           你的指令
           <textarea id="prompt" rows="3" placeholder="例如：提炼核心观点并输出 120 字摘要"></textarea>
         </label>
-        <button id="summarize-btn" type="button">生成总结</button>
+        <button id="summarize-btn" type="button" class="btn-primary">生成总结</button>
         <div id="summary-output" class="summary-output"></div>
       </section>
     </main>
@@ -73,6 +112,8 @@
         </label>
         <h3 class="title"></h3>
         <p class="preview"></p>
+        <button type="button" class="expand-btn">展开全文</button>
+        <div class="full-content" style="display:none"></div>
         <div class="actions">
           <a class="url" target="_blank" rel="noopener noreferrer">查看原文</a>
           <button type="button" class="delete-btn">删除</button>

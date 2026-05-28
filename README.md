@@ -1,53 +1,68 @@
 # 公众号推送整理与总结助手
 
-一个轻量级静态网页工具，帮助你：
+整理微信公众号推送文章，按公众号 / 日期 / 关键词筛选，使用 AI（OpenAI GPT）或本地算法一键总结。
 
-- 按公众号、日期整理每日推送文章；
-- 对文章做关键词/日期筛选；
-- 用自然语言输入总结需求，快速得到摘要结果。
+## 功能
 
-## 在线部署（别人可直接点开）
+- **文章录入**：手动添加公众号文章（标题、正文、日期、原文链接）
+- **批量导入**：支持 JSON 格式批量导入文章
+- **示例数据**：一键加载 5 篇示例文章，即刻体验
+- **筛选过滤**：按关键词、日期、公众号名称快速检索
+- **AI 智能总结**：接入 OpenAI GPT API，对选定文章进行流式总结
+- **本地摘要兜底**：未配置 API Key 时自动使用本地词频算法生成摘要
+- **自定义指令**：自由输入总结需求（如"提炼核心观点"、"输出 120 字摘要"）
+- **数据持久化**：文章和设置存储在浏览器 localStorage
 
-你说得对：本地 `index.html` 只能你自己看。下面给你 **3 种云部署方式**，都可以得到公网链接。
+## 使用方式
 
-### 方案 A（推荐，最快）：Cloudflare Pages（拖拽上传）
+### 在线访问
 
-1. 打开：https://dash.cloudflare.com/
-2. 进入 **Workers & Pages** → **Create application** → **Pages** → **Upload assets**。
-3. 上传当前项目目录下文件：
-   - `index.html`
-   - `app.js`
-   - `styles.css`
-4. 部署完成后会得到类似：`https://xxx.pages.dev` 的公网链接。
+部署在 GitHub Pages：`https://<用户名>.github.io/wechat-digest/`
 
-### 方案 B：Vercel（拖拽上传）
+### 本地运行
 
-1. 打开：https://vercel.com/new
-2. 选择 **Deploy without Git**（或导入 Git 仓库）。
-3. 上传本项目目录，点击 Deploy。
-4. 会得到类似：`https://xxx.vercel.app` 的公网链接。
+```bash
+# 方式一：直接打开
+open index.html
 
-> 本仓库已提供 `vercel.json`，可直接用于静态托管。
+# 方式二：启动本地服务器（避免浏览器安全限制）
+python3 -m http.server 4173
+# 访问 http://127.0.0.1:4173/
+```
 
-### 方案 C：GitHub Pages（长期稳定，适合持续更新）
+## 配置 OpenAI API
 
-本仓库已新增 GitHub Pages 自动部署工作流：`.github/workflows/deploy-pages.yml`。
+1. 打开页面顶部「API 设置」面板
+2. 输入你的 OpenAI API Key（`sk-...`）
+3. 选择模型（推荐 `gpt-4o-mini`，性价比最高）
+4. 点击「保存设置」
 
-你只需要：
+> API Key 仅存储在浏览器本地 localStorage，不会上传到任何服务器。
 
-1. 把代码推送到你的 GitHub 仓库 `main` 分支；
-2. 在仓库 `Settings -> Pages` 中将 Source 设为 **GitHub Actions**；
-3. 等待 Actions 跑完，就会生成公开链接：
-   `https://<你的用户名>.github.io/<仓库名>/`
+## 批量导入格式
 
-## 本地使用方式
+支持导入 JSON 文件，格式如下：
 
-1. 直接点击 [`index.html`](./index.html) 打开网页；
-2. 若浏览器限制本地脚本，可在项目目录运行：`python3 -m http.server 4173`
-3. 然后访问：[http://127.0.0.1:4173/](http://127.0.0.1:4173/)
+```json
+[
+  {
+    "account": "公众号名称",
+    "publishDate": "2025-03-18",
+    "title": "文章标题",
+    "url": "https://mp.weixin.qq.com/...",
+    "content": "文章正文内容..."
+  }
+]
+```
 
-## 备注
+其中 `title` 和 `content` 为必填字段。
 
-- 当前版本采用本地摘要算法，无需后端即可使用；
-- 后续可在 `app.js` 中替换 `summarizeText` 逻辑为任意大模型 API 调用；
-- 我在当前执行环境尝试过直接创建公网隧道，但受网络限制无法直连外网 SSH 隧道，所以给你补齐了可落地的云部署方案（上面三种都能“别人直接点开”）。
+## 技术栈
+
+- 纯 HTML + CSS + JavaScript，无框架依赖
+- OpenAI Chat Completions API（流式 SSE）
+- GitHub Pages 静态托管
+
+## License
+
+MIT
