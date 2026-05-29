@@ -1,11 +1,9 @@
 {
   "name": "wechat-digest",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "type": "module",
-  "description": "AI 公众号文章抓取、自动总结与结构化分析工具",
+  "description": "墨摘 · AI 公众号文章抓取、自动总结与结构化分析工具（GitHub Pages 前端 + Deno Deploy 后端）",
   "scripts": {
-    "dev": "vercel dev",
-    "start": "vercel dev"
+    "backend": "deno run --allow-net --allow-env --unstable-kv backend/main.ts"
   }
 }

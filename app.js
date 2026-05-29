@@ -2,6 +2,11 @@
    墨摘 WeChat Digest · 抓取 + AI 分析 + 匿名工作区码云同步
    ════════════════════════════════════════════════════════ */
 
+/* ★★★ 部署后端后，把你的 Deno Deploy 地址填到这里（结尾不要加斜杠）★★★
+   例如：const BACKEND_BASE = "https://wechat-digest.deno.dev";
+   留空时会回退到「设置 → 后端 API 地址」，或同源 /api（本地 deno 调试）。 */
+const BACKEND_BASE = "";
+
 const WS_KEY = "wcd_ws";
 const SETTINGS_KEY = "wcd_settings_v2";
 const artKey = (code) => `wcd_art_${code}`;
@@ -87,6 +92,11 @@ function renderWsCode() {
 /* ════════════════ Cloud sync ════════════════ */
 
 async function initSync() {
+  if (!backendConfigured()) {
+    cloudMode = "local";
+    setSync("local", "未配置后端");
+    return;
+  }
   setSync("syncing", "同步中…");
   try {
     const res = await fetch(apiUrl(`/api/data?ws=${encodeURIComponent(wsCode)}`));
@@ -294,6 +304,11 @@ async function crawl(account) {
     toast("请输入公众号名称", true);
     return;
   }
+  if (!backendConfigured()) {
+    toast("自动抓取需要后端：请在「设置 → 后端 API 地址」填入你的 Deno Deploy 地址", true);
+    openSettings();
+    return;
+  }
   const btn = $("crawl-btn");
   const old = btn.textContent;
   btn.disabled = true;
@@ -395,6 +410,11 @@ async function parseLink(url) {
     toast("请输入文章链接", true);
     return;
   }
+  if (!backendConfigured()) {
+    toast("解析链接需要后端：请在「设置 → 后端 API 地址」填入你的 Deno Deploy 地址", true);
+    openSettings();
+    return;
+  }
   const btn = $("parse-link-btn");
   const old = btn.textContent;
   btn.disabled = true;
@@ -439,6 +459,11 @@ function buildUserMsg(article, instruction) {
 async function streamAnalyze(article, instruction, outEl) {
   const cfg = PROVIDERS[settings.provider];
   const key = settings.keys[settings.provider];
+  if (!backendConfigured()) {
+    toast("AI 分析需要后端代理：请在「设置 → 后端 API 地址」填入你的 Deno Deploy 地址", true);
+    openSettings();
+    return false;
+  }
   if (!key) {
     toast(`请先在设置中配置 ${cfg.label} 的 API Key`, true);
     openSettings();
@@ -820,8 +845,12 @@ function today() {
 }
 
 function apiUrl(path) {
-  const base = (settings.apiBase || "").replace(/\/+$/, "");
+  const base = (settings.apiBase || BACKEND_BASE || "").replace(/\/+$/, "");
   return base + path;
+}
+
+function backendConfigured() {
+  return !!(settings.apiBase || BACKEND_BASE);
 }
 
 function loadArticlesLocal(code) {

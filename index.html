@@ -281,9 +281,9 @@
             <p class="set-tip">Key 仅保存在本机浏览器，不会上传云端工作区。换设备需重新填写。</p>
           </div>
           <div class="set-group">
-            <label class="set-label" for="api-base">后端 API 地址（可选）</label>
-            <input id="api-base" placeholder="留空＝同源 /api（部署在 Vercel 时）" autocomplete="off" />
-            <p class="set-tip">前端在 GitHub Pages、后端在 Vercel 时，填后端域名，如 https://xxx.vercel.app</p>
+            <label class="set-label" for="api-base">后端 API 地址</label>
+            <input id="api-base" placeholder="https://你的项目.deno.dev" autocomplete="off" />
+            <p class="set-tip">前端托管在 GitHub Pages，后端部署在 Deno Deploy。把你的 Deno Deploy 地址填这里（结尾不要加斜杠）。也可直接写进 app.js 顶部的 BACKEND_BASE，让所有访客免配置。</p>
           </div>
           <div class="set-actions">
             <button type="button" class="btn-solid" id="save-settings">保存设置</button>

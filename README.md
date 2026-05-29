@@ -3,7 +3,7 @@
 > 输入公众号名称，自动抓取最新文章，AI 一键完成总结与结构化分析。
 > **匿名工作区码** 即开即用、跨设备同步、人人数据隔离；支持 **OpenAI / DeepSeek / 通义千问**。
 
-![stack](https://img.shields.io/badge/frontend-Vanilla_JS-f7df1e) ![stack](https://img.shields.io/badge/backend-Vercel_Serverless-000) ![store](https://img.shields.io/badge/sync-Upstash_KV-00c389) ![ai](https://img.shields.io/badge/AI-OpenAI%20%7C%20DeepSeek%20%7C%20Qwen-10b981)
+![stack](https://img.shields.io/badge/frontend-GitHub_Pages-222) ![stack](https://img.shields.io/badge/backend-Deno_Deploy-000) ![store](https://img.shields.io/badge/sync-Deno_KV-00c389) ![ai](https://img.shields.io/badge/AI-OpenAI%20%7C%20DeepSeek%20%7C%20Qwen-10b981)
 
 ---
 
@@ -36,47 +36,46 @@
 ## 🏗 架构
 
 ```
-浏览器（静态前端，零构建）
+GitHub Pages（静态前端，零构建）
   ├─ index.html / styles.css / app.js
   │   工作区码生成 + 云同步（防抖上传 / 合并下载）+ Key 本地存储
-  └─ 调用 ↓
-Serverless 后端（Vercel Functions, /api）
+  └─ 跨域调用 ↓
+Deno Deploy（后端，单文件 backend/main.ts）
   ├─ GET  /api/search?account=名称      搜狗微信搜索 → 文章列表（KV 缓存 10min）
   ├─ GET  /api/article?url=链接         解析搜狗跳转 → 抓取清洗正文（KV 缓存 1d）
-  ├─ GET/PUT /api/data?ws=工作区码       读取 / 保存某工作区的文章（Upstash KV）
+  ├─ GET/PUT /api/data?ws=工作区码       读取 / 保存某工作区的文章
   └─ POST /api/chat                     OpenAI 兼容流式代理（多 provider）
         ↓
-Upstash Redis（KV）  按 ws:<码> 存数据；search:* / art:* 做抓取缓存
+Deno KV（内置，零配置）  按 ws:<码> 存数据；search:* / art:* 做抓取缓存（大值自动分块）
 ```
 
 > 为什么需要后端：微信公众号无公开官方 API，浏览器直连会被 **CORS** 拦截且有强反爬；
-> DeepSeek / 通义千问的 API 也未对浏览器开放跨域。抓取、AI 调用、跨设备同步都经由 Serverless 完成。
+> DeepSeek / 通义千问的 API 也未对浏览器开放跨域。抓取、AI 调用、跨设备同步都经由后端完成。
+> 后端与 Vercel 解耦，**前端纯静态托管在 GitHub Pages，后端免费跑在 Deno Deploy**。
 
 ---
 
-## 🚀 部署（推荐 Vercel，一处搞定前后端 + 同步）
+## 🚀 部署（GitHub Pages 前端 + Deno Deploy 后端）
 
-1. Fork / clone 本仓库
-2. 在 [vercel.com](https://vercel.com) 导入该仓库，框架选 **Other**，无需构建命令
-3. **启用云同步（可选但推荐）**：在 Vercel 项目 → **Storage** → 创建一个 **Upstash for Redis**（或旧版 Vercel KV）并关联到项目。集成会自动注入环境变量：
-   - `KV_REST_API_URL`
-   - `KV_REST_API_TOKEN`
+### ① 部署后端到 Deno Deploy（免费、内置 KV、无需信用卡）
 
-   （应用也兼容 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`。）
-4. 重新部署。访问分配的域名即可，`/api/*` 自动成为 Serverless 函数。
+1. 登录 [dash.deno.com](https://dash.deno.com) → **New Project** → 关联本 GitHub 仓库
+2. **Entrypoint** 选 `backend/main.ts`
+3. 部署完成后会得到一个地址，例如 `https://wechat-digest.deno.dev`
+4. Deno KV 在 Deno Deploy 上**自动可用**，无需任何配置或环境变量
 
-> 未配置 KV 也能用：`/api/data` 会返回 501，前端自动切到「纯本地模式」（数据仅存当前浏览器，不跨设备）。
+> 本地调试后端：`deno run --allow-net --allow-env --unstable-kv backend/main.ts`（默认监听 8000）
 
-本地开发：
+### ② 部署前端到 GitHub Pages
 
-```bash
-npm i -g vercel
-vercel dev          # 同时跑前端与 /api 函数；如需同步，先在 Vercel 关联 KV 并 `vercel env pull`
-```
+1. 把上一步拿到的后端地址填进 `app.js` 顶部的常量：
+   ```js
+   const BACKEND_BASE = "https://wechat-digest.deno.dev"; // ← 改成你的
+   ```
+   （填进去后，所有访客无需任何配置即可使用；也可不填，让每个用户在「设置 → 后端 API 地址」自行填写。）
+2. 仓库 **Settings → Pages → Source** 选 **GitHub Actions**。推送到 `main` 后，已内置的工作流会自动把站点发布到 `https://<用户名>.github.io/<仓库名>/`
 
-> ⚠️ **GitHub Pages 只能托管静态前端，无法运行 `/api`。**
-> 若用 Pages 托管前端，请把后端单独部署到 Vercel，并在应用「设置 → 后端 API 地址」填入
-> 你的 Vercel 域名（如 `https://your-app.vercel.app`），前端会跨域调用它。
+> 未配置后端时：自动抓取 / AI 分析 / 云同步都会提示「需要后端」，并降级为纯本地模式（数据仅存当前浏览器）。
 
 ---
 
