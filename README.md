@@ -1,9 +1,21 @@
-# 墨摘 WeChat Digest · AI 公众号抓取与结构化分析
+<div align="center">
 
-> 输入公众号名称，自动抓取最新文章，AI 一键完成总结与结构化分析。
-> **匿名工作区码** 即开即用、跨设备同步、人人数据隔离；支持 **OpenAI / DeepSeek / 通义千问**。
+# 墨摘 WeChat Digest
 
-![stack](https://img.shields.io/badge/frontend-GitHub_Pages-222) ![stack](https://img.shields.io/badge/backend-Deno_Deploy-000) ![store](https://img.shields.io/badge/sync-Deno_KV-00c389) ![ai](https://img.shields.io/badge/AI-OpenAI%20%7C%20DeepSeek%20%7C%20Qwen-10b981)
+**AI 公众号抓取与结构化分析**
+
+<sub>输入公众号名称，自动抓取最新文章，AI 一键完成总结与结构化分析</sub>
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-在线体验-2ea44f?style=for-the-badge)](https://jackychen-12.github.io/wechat-digest/)
+
+[![GitHub Pages](https://img.shields.io/badge/frontend-GitHub_Pages-222?logo=github)](https://jackychen-12.github.io/wechat-digest/)
+[![Deno Deploy](https://img.shields.io/badge/backend-Deno_Deploy-000?logo=deno)](https://deno.com/deploy)
+[![Deno KV](https://img.shields.io/badge/sync-Deno_KV-00c389)](https://deno.com/kv)
+[![AI](https://img.shields.io/badge/AI-OpenAI%20%7C%20DeepSeek%20%7C%20Qwen-10b981)](https://platform.openai.com/)
+[![Deploy](https://github.com/Jackychen-12/wechat-digest/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/Jackychen-12/wechat-digest/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+</div>
 
 ---
 
