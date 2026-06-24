@@ -5,7 +5,7 @@ import { openSettings, selectProviderTab, saveSettingsFromUI } from "./settings.
 import { renderAll, renderList, selectArticle } from "./render.js";
 import { crawl, importSelected, parseLink } from "./crawl.js";
 import { addArticle, loadDemo, importJson, clearAll } from "./data.js";
-import { runAllPending } from "./skills/registry.js";
+import { runAllPending, getActiveSkillId } from "./skills/registry.js";
 
 export function bindEvents() {
   $("hero-form").addEventListener("submit", (e) => {
@@ -37,7 +37,7 @@ export function bindEvents() {
     renderList();
   });
 
-  $("analyze-all-btn").addEventListener("click", () => runAllPending("digest"));
+  $("analyze-all-btn").addEventListener("click", () => runAllPending(getActiveSkillId()));
   $("add-article-btn").addEventListener("click", () => openModal("add-modal"));
   $("open-settings").addEventListener("click", openSettings);
   $("load-demo-empty").addEventListener("click", loadDemo);

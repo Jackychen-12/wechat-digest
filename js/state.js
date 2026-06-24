@@ -20,10 +20,21 @@ export function setSyncTimer(v) { syncTimer = v; }
 
 export function loadArticlesLocal(code) {
   try {
-    return JSON.parse(localStorage.getItem(artKey(code))) || [];
+    const arr = JSON.parse(localStorage.getItem(artKey(code))) || [];
+    return arr.map(migrateArticle);
   } catch {
     return [];
   }
+}
+
+function migrateArticle(a) {
+  if (!a.skills) {
+    a.skills = {};
+    if (a.summary) {
+      a.skills.digest = { result: a.summary, analyzedAt: a.analyzedAt || null, instruction: "" };
+    }
+  }
+  return a;
 }
 
 export function saveArticlesLocal() {

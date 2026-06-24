@@ -474,6 +474,25 @@ button:disabled { opacity: 0.55; cursor: default; transform: none !important; }
 .detail-title { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.2; margin-bottom: 1.1rem; }
 .detail-bar { display: flex; gap: 0.6rem; }
 
+.skill-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.skill-tab {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line-2);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.skill-tab:hover { border-color: var(--ink); color: var(--ink); }
+.skill-tab.active { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.skill-tab.done::after { content: " ✓"; font-size: 0.7em; opacity: 0.6; }
+.skill-tab.active.done::after { opacity: 0.8; }
+
+.ai-badge.partial { background: var(--gold); color: #fff; }
+
 .analysis-block { margin-bottom: 1.8rem; }
 .analysis-label {
   font-family: var(--font-mono);

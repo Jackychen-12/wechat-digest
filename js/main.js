@@ -5,6 +5,8 @@ import { renderWsCode, initSync } from "./workspace.js";
 import { maybeSeedDemo } from "./data.js";
 import { renderAll } from "./render.js";
 import "./skills/digest.js";
+import "./skills/sentiment.js";
+import "./skills/deepread.js";
 
 initState();
 bindEvents();

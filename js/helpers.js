@@ -4,6 +4,10 @@ import * as S from "./state.js";
 export const $ = (id) => document.getElementById(id);
 
 export function makeArticle(o) {
+  const skills = o.skills || {};
+  if (!Object.keys(skills).length && o.summary) {
+    skills.digest = { result: o.summary, analyzedAt: o.analyzedAt || new Date().toISOString(), instruction: "" };
+  }
   return {
     id: crypto.randomUUID(),
     account: o.account || "",
@@ -11,8 +15,9 @@ export function makeArticle(o) {
     title: o.title || "",
     url: o.url || "",
     content: o.content || "",
+    skills,
     summary: o.summary || "",
-    analyzedAt: o.summary ? new Date().toISOString() : null,
+    analyzedAt: o.summary ? (o.analyzedAt || new Date().toISOString()) : null,
     createdAt: new Date().toISOString(),
   };
 }

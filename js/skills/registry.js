@@ -6,6 +6,7 @@ import { scheduleSync } from "../workspace.js";
 import { renderList, updateStats } from "../render.js";
 
 const skills = new Map();
+let activeSkillId = "digest";
 
 export function registerSkill(skill) {
   skills.set(skill.id, skill);
@@ -17,6 +18,27 @@ export function getSkill(id) {
 
 export function listSkills() {
   return [...skills.values()];
+}
+
+export function getActiveSkillId() {
+  return activeSkillId;
+}
+
+export function setActiveSkillId(id) {
+  if (skills.has(id)) activeSkillId = id;
+}
+
+export function hasSkillResult(article, skillId) {
+  return !!article.skills?.[skillId]?.result;
+}
+
+export function getSkillResult(article, skillId) {
+  return article.skills?.[skillId]?.result || "";
+}
+
+export function countSkillsDone(article) {
+  if (!article.skills) return 0;
+  return Object.values(article.skills).filter((s) => s.result).length;
 }
 
 export async function runSkill(skillId, article, outEl, instruction) {
@@ -91,8 +113,16 @@ export async function runSkill(skillId, article, outEl, instruction) {
     }
 
     if (!result.trim()) throw new Error("模型未返回内容");
+
+    if (!article.skills) article.skills = {};
+    article.skills[skillId] = {
+      result,
+      analyzedAt: new Date().toISOString(),
+      instruction: instruction || "",
+    };
     article.summary = result;
     article.analyzedAt = new Date().toISOString();
+
     scheduleSync();
     if (outEl) outEl.innerHTML = formatMarkdown(result);
     renderList();
@@ -111,7 +141,7 @@ export async function runAllPending(skillId) {
     openSettings();
     return;
   }
-  const pending = S.articles.filter((a) => !a.summary);
+  const pending = S.articles.filter((a) => !a.skills?.[skillId]?.result);
   if (!pending.length) {
     toast("没有待分析的文章");
     return;
