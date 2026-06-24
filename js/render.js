@@ -1,6 +1,6 @@
 import * as S from "./state.js";
 import { $, byId, esc, formatMarkdown, hasKey } from "./helpers.js";
-import { streamAnalyze } from "./skills/digest.js";
+import { runSkill } from "./skills/registry.js";
 import { scheduleSync } from "./workspace.js";
 import { updateProviderChip } from "./settings.js";
 
@@ -108,7 +108,7 @@ export function renderDetail(a) {
     </div>
   `;
 
-  const run = () => streamAnalyze(a, $("d-prompt").value.trim(), $("analysis-out"));
+  const run = () => runSkill("digest", a, $("analysis-out"), $("d-prompt").value.trim());
   $("d-analyze").addEventListener("click", run);
   $("d-gen").addEventListener("click", run);
   $("d-delete").addEventListener("click", () => deleteArticle(a.id));

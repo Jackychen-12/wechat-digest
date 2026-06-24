@@ -3,7 +3,7 @@ import { $, apiUrl, backendConfigured, makeArticle, today, toast, hasKey, openMo
 import { openSettings } from "./settings.js";
 import { scheduleSync } from "./workspace.js";
 import { renderAll, selectArticle } from "./render.js";
-import { streamAnalyze } from "./skills/digest.js";
+import { runSkill } from "./skills/registry.js";
 
 export async function crawl(account) {
   if (!account) {
@@ -103,7 +103,7 @@ export async function importSelected() {
     toast(`成功导入 ${imported} 篇`);
     selectArticle(added[0].id);
     if (autoAnalyze && hasKey()) {
-      for (const a of added) await streamAnalyze(a, "", a.id === S.activeId ? $("analysis-out") : null);
+      for (const a of added) await runSkill("digest", a, a.id === S.activeId ? $("analysis-out") : null);
       toast("全部分析完成");
     } else if (autoAnalyze && !hasKey()) {
       toast("已导入，但未配置 API Key，跳过自动分析", true);
