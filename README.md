@@ -33,95 +33,158 @@
 
 ---
 
+## 🚀 本地部署（推荐）
+
+### 前提
+
+- [Deno](https://deno.com/) 已安装（`curl -fsSL https://deno.land/install.sh | sh`）
+- 一个 AI 模型的 API Key（推荐 [DeepSeek](https://platform.deepseek.com/)，国内可直连，价格低）
+
+### 一键启动
+
+```bash
+git clone https://github.com/Jackychen-12/wechat-digest.git
+cd wechat-digest
+./start.sh
+```
+
+脚本会自动启动后端（端口 8000）和前端（端口 3000），打开浏览器访问 `http://localhost:3000` 即可使用。
+
+> 首次使用需在页面「设置」中填写 **后端 API 地址** `http://localhost:8000` 和你的 **API Key**。
+
+### 手动启动
+
+如果 `start.sh` 不适用，也可以手动分两步启动：
+
+```bash
+# 终端 1：启动后端
+deno run --allow-net --allow-env --unstable-kv backend/main.ts
+
+# 终端 2：启动前端（任选一种）
+npx serve -s . -l 3000          # Node.js 方式
+python3 -m http.server 3000     # Python 方式
+```
+
+> ⚠️ 不能直接双击 `index.html` 打开——ES Module 需要 HTTP 服务器，`file://` 协议会报 CORS 错误。
+
+---
+
+## ☁️ 云端部署（可选）
+
+如果你想让别人通过网址直接访问（而不是本地运行），可以部署到云端：
+
+### ① 部署后端到 Deno Deploy（免费）
+
+1. 登录 [dash.deno.com](https://dash.deno.com) → **New Project** → 关联本 GitHub 仓库
+2. **Entrypoint** 选 `backend/main.ts`
+3. 部署完成后会得到一个地址，例如 `https://wechat-digest.deno.dev`
+4. Deno KV 自动可用，无需配置
+
+### ② 部署前端到 GitHub Pages
+
+1. 把后端地址填进 `js/config.js` 顶部：
+   ```js
+   export const BACKEND_BASE = "https://wechat-digest.deno.dev";
+   ```
+2. 仓库 Settings → Pages → Source 选 **GitHub Actions**，推送后自动部署
+
+---
+
+## 🔑 配置模型
+
+首次使用，在页面「设置」中配置：
+
+| 模型 | Key 获取 | 备注 |
+| --- | --- | --- |
+| DeepSeek | [platform.deepseek.com](https://platform.deepseek.com) | 国内可直连，推荐首选 |
+| 通义千问 | [阿里云百炼控制台](https://dashscope.console.aliyun.com/) | OpenAI 兼容模式 |
+| OpenAI | [platform.openai.com](https://platform.openai.com) | 需国外网络 |
+
+API Key 仅保存在你的浏览器本地，不会上传到云端。
+
+---
+
+## 🧭 使用流程
+
+1. 输入**公众号名称**（如"晚点LatePost"）→ 点「抓取文章」
+2. 在弹窗中勾选要导入的文章（可勾选「导入后自动 AI 分析」）
+3. 点击左侧文章列表中的任意文章 → 右侧查看 AI 结构化分析
+4. 也可以直接粘贴文章链接 → 点「解析」导入
+5. 「⚡ 一键分析未分析」可批量处理整个文章库
+6. 在分析框下方可填写**自定义指令**（如「侧重投资视角」）重新生成
+
+---
+
 ## 👥 多用户：匿名工作区码
 
-无需注册登录。首次进入应用会自动生成一串高熵 **工作区码**（形如 `a1b2-c3d4-e5f6-7890`）：
+无需注册登录。首次进入自动生成一串 **工作区码**（如 `a1b2-c3d4-e5f6-7890`）：
 
-- 工作区码写入浏览器与地址栏 `#ws=...`，可收藏/复制保存；
-- 文章与分析结果按工作区码存于云端 KV，**不同码之间完全隔离、内容不重叠**；
-- 在任意设备的工作台「切换」处输入同一串码，即可同步同一份数据；
-- ⚠️ 工作区码即数据钥匙，**持有者可读写该工作区**，请妥善保存、勿公开分享；
-- 若后端未配置 KV，应用自动降级为「纯本地模式」（仅存当前浏览器），功能照常可用。
+- 文章与分析按工作区码隔离，不同码之间完全互不重叠
+- 复制码 → 在另一台设备输入 → 数据自动同步
+- ⚠️ 工作区码即数据钥匙，请妥善保存、勿公开分享
+- 未配置后端时自动降级为纯本地模式
 
 ---
 
 ## 🏗 架构
 
 ```
-GitHub Pages（静态前端，零构建）
-  ├─ index.html / styles.css / app.js
-  │   工作区码生成 + 云同步（防抖上传 / 合并下载）+ Key 本地存储
+前端（纯静态 HTML + ES Modules，零构建）
+  ├─ index.html / styles.css
+  ├─ js/
+  │   ├─ main.js          入口
+  │   ├─ config.js         常量与 Provider 配置
+  │   ├─ state.js          全局状态 + localStorage
+  │   ├─ helpers.js        工具函数
+  │   ├─ workspace.js      工作区码 + 云同步
+  │   ├─ settings.js       设置面板
+  │   ├─ render.js         列表 / 详情渲染
+  │   ├─ crawl.js          搜狗搜索 + 文章抓取
+  │   ├─ data.js           文章 CRUD + 导入导出
+  │   ├─ events.js         事件绑定
+  │   └─ skills/           AI 技能（可扩展）
+  │       ├─ registry.js   技能注册表 + 通用调度引擎
+  │       └─ digest.js     结构化摘要技能
   └─ 跨域调用 ↓
-Deno Deploy（后端，单文件 backend/main.ts）
-  ├─ GET  /api/search?account=名称      搜狗微信搜索 → 文章列表（KV 缓存 10min）
-  ├─ GET  /api/article?url=链接         解析搜狗跳转 → 抓取清洗正文（KV 缓存 1d）
-  ├─ GET/PUT /api/data?ws=工作区码       读取 / 保存某工作区的文章
-  └─ POST /api/chat                     OpenAI 兼容流式代理（多 provider）
-        ↓
-Deno KV（内置，零配置）  按 ws:<码> 存数据；search:* / art:* 做抓取缓存（大值自动分块）
+后端（Deno 单文件 backend/main.ts，零依赖）
+  ├─ GET  /api/search?account=名称      搜狗微信搜索（KV 缓存 10min）
+  ├─ GET  /api/article?url=链接         抓取清洗正文（KV 缓存 1d）
+  ├─ GET/PUT /api/data?ws=工作区码       工作区数据读写
+  └─ POST /api/chat                     LLM 流式代理（多 provider）
 ```
 
-> 为什么需要后端：微信公众号无公开官方 API，浏览器直连会被 **CORS** 拦截且有强反爬；
-> DeepSeek / 通义千问的 API 也未对浏览器开放跨域。抓取、AI 调用、跨设备同步都经由后端完成。
-> 后端与 Vercel 解耦，**前端纯静态托管在 GitHub Pages，后端免费跑在 Deno Deploy**。
+### 技能扩展
+
+新增 AI 分析能力只需在 `js/skills/` 下新建文件：
+
+```javascript
+// js/skills/compare.js
+import { registerSkill } from "./registry.js";
+
+registerSkill({
+  id: "compare",
+  name: "多篇对比",
+  icon: "⚖️",
+  multi: true,
+  buildPrompt(articles) {
+    return {
+      system: "你是内容对比分析专家…",
+      user: articles.map(a => `【${a.title}】\n${a.content}`).join("\n---\n"),
+    };
+  },
+});
+```
+
+在 `main.js` 中 `import "./skills/compare.js"` 即可生效，无需修改其他文件。
 
 ---
 
-## 🚀 部署（GitHub Pages 前端 + Deno Deploy 后端）
+## ⚠️ 关于抓取
 
-### ① 部署后端到 Deno Deploy（免费、内置 KV、无需信用卡）
-
-1. 登录 [dash.deno.com](https://dash.deno.com) → **New Project** → 关联本 GitHub 仓库
-2. **Entrypoint** 选 `backend/main.ts`
-3. 部署完成后会得到一个地址，例如 `https://wechat-digest.deno.dev`
-4. Deno KV 在 Deno Deploy 上**自动可用**，无需任何配置或环境变量
-
-> 本地调试后端：`deno run --allow-net --allow-env --unstable-kv backend/main.ts`（默认监听 8000）
-
-### ② 部署前端到 GitHub Pages
-
-1. 把上一步拿到的后端地址填进 `app.js` 顶部的常量：
-   ```js
-   const BACKEND_BASE = "https://wechat-digest.deno.dev"; // ← 改成你的
-   ```
-   （填进去后，所有访客无需任何配置即可使用；也可不填，让每个用户在「设置 → 后端 API 地址」自行填写。）
-2. 仓库 **Settings → Pages → Source** 选 **GitHub Actions**。推送到 `main` 后，已内置的工作流会自动把站点发布到 `https://<用户名>.github.io/<仓库名>/`
-
-> 未配置后端时：自动抓取 / AI 分析 / 云同步都会提示「需要后端」，并降级为纯本地模式（数据仅存当前浏览器）。
-
----
-
-## 🔑 配置模型
-
-进入「工作台 → 设置」：
-
-| 模型 | Key 获取 | 备注 |
-| --- | --- | --- |
-| OpenAI | platform.openai.com | 需国外网络 |
-| DeepSeek | platform.deepseek.com | 国内可直连，性价比高 |
-| 通义千问 | 阿里云百炼控制台 | OpenAI 兼容模式 |
-
-Key 仅保存在浏览器本地，调用时随请求发送给你自己部署的后端代理，再转发给模型厂商。
-
----
-
-## 🧭 使用流程
-
-1. 首页或工作台输入**公众号名称** → 「抓取文章」
-2. 在结果弹窗勾选要导入的文章（可勾选「导入后自动 AI 分析」）
-3. 左侧文章库点击任意文章 → 右侧查看 AI 结构化分析
-4. 可在分析框填写**自定义指令**（如「侧重投资视角」）重新生成
-5. 「一键分析未分析」批量处理整个文章库
-
----
-
-## ⚠️ 关于抓取的现实说明
-
-- 后端已做加固：**cookie 预热、UA 轮换、指数退避重试、KV 结果缓存**，可显著提高成功率并降低反爬触发。
-- 但搜狗微信搜索仍存在反爬（高频访问会触发验证码），抓取**不保证 100% 成功**；触发时应用会提示，可改用「粘贴链接」。
-- 搜狗搜索结果是 JS 跳转链接，后端会自动解析出真实 `mp.weixin.qq.com` 地址再抓取。
-- 部分图片/视频类推送无法解析正文，会提示手动粘贴。
-- 本项目仅供个人学习与研究，请遵守目标站点的 robots 与服务条款，控制访问频率。
+- 后端已做加固：cookie 预热、UA 轮换、指数退避重试、KV 结果缓存
+- 搜狗微信搜索存在反爬，高频访问会触发验证码，抓取**不保证 100% 成功**
+- 触发反爬时可改用「粘贴链接」方式导入
+- 本项目仅供个人学习与研究，请遵守目标站点的 robots 与服务条款
 
 ---
 
