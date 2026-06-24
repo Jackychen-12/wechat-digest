@@ -231,14 +231,17 @@ async function handleSearch(url: URL) {
   const account = (url.searchParams.get("account") || "").trim();
   if (!account) return json({ error: "缺少 account 参数" }, 400);
   const skipCache = url.searchParams.get("fresh") === "1";
-  const prefix = ["search", account.toLowerCase()];
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const tsn = url.searchParams.get("tsn") || "";
+  const prefix = ["search", account.toLowerCase(), `p${page}`, tsn || "all"];
 
   if (!skipCache) {
     const cached = await kvGetBlob<{ articles: unknown[]; count: number }>(prefix);
-    if (cached?.data?.articles) return json({ ...cached.data, account, cached: true });
+    if (cached?.data?.articles) return json({ ...cached.data, account, cached: true, page });
   }
 
-  const searchUrl = `https://weixin.sogou.com/weixin?type=2&ie=utf8&query=${encodeURIComponent(account)}`;
+  let searchUrl = `https://weixin.sogou.com/weixin?type=2&ie=utf8&query=${encodeURIComponent(account)}&page=${page}`;
+  if (tsn && ["1", "2", "3", "4"].includes(tsn)) searchUrl += `&tsn=${tsn}`;
   try {
     const cookie = await sogouCookie();
     const result = await fetchHtmlRetry(
@@ -254,7 +257,7 @@ async function handleSearch(url: URL) {
     if (!result.ok) return json({ error: `搜狗返回 ${result.status || "无响应"}，请稍后重试` }, result.status || 502);
 
     const items = parseArticles(html);
-    const payload = { account, count: items.length, articles: items };
+    const payload = { account, count: items.length, articles: items, page };
     if (items.length) await kvSetBlob(prefix, payload, 600_000);
     return json(payload);
   } catch (err) {

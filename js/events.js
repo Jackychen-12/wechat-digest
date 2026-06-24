@@ -5,6 +5,7 @@ import { openSettings, selectProviderTab, saveSettingsFromUI } from "./settings.
 import { renderAll, renderList, selectArticle } from "./render.js";
 import { crawl, importSelected, parseLink } from "./crawl.js";
 import { addArticle, loadDemo, importJson, clearAll } from "./data.js";
+import { exportJSON, exportCSV } from "./export.js";
 import { runAllPending, getActiveSkillId } from "./skills/registry.js";
 
 export function bindEvents() {
@@ -73,6 +74,8 @@ export function bindEvents() {
   $("load-demo-btn").addEventListener("click", loadDemo);
   $("import-json-btn").addEventListener("click", () => $("import-file").click());
   $("import-file").addEventListener("change", importJson);
+  $("export-json-btn").addEventListener("click", exportJSON);
+  $("export-csv-btn").addEventListener("click", exportCSV);
   $("clear-all-btn").addEventListener("click", clearAll);
 
   $("article-form").addEventListener("submit", addArticle);

@@ -54,8 +54,13 @@ export function importJson(e) {
       const data = JSON.parse(ev.target.result);
       const arr = Array.isArray(data) ? data : [data];
       let n = 0;
+      let skipped = 0;
+      const existingKeys = new Set(S.articles.map((a) => `${a.account}::${a.title}`));
       arr.forEach((it) => {
         if (it.title && it.content) {
+          const key = `${it.account || "未知公众号"}::${it.title}`;
+          if (existingKeys.has(key)) { skipped++; return; }
+          existingKeys.add(key);
           S.articles.unshift(
             makeArticle({
               account: it.account || "未知公众号",
@@ -71,7 +76,8 @@ export function importJson(e) {
       });
       scheduleSync();
       renderAll();
-      toast(`成功导入 ${n} 篇`);
+      const msg = skipped ? `成功导入 ${n} 篇，跳过 ${skipped} 篇重复` : `成功导入 ${n} 篇`;
+      toast(msg);
     } catch {
       toast("JSON 格式错误", true);
     }

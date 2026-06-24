@@ -5,8 +5,8 @@ import { scheduleSync } from "./workspace.js";
 import { renderAll, selectArticle } from "./render.js";
 import { runSkill } from "./skills/registry.js";
 
-export async function crawl(account) {
-  if (!account) {
+export async function crawl(input) {
+  if (!input) {
     toast("请输入公众号名称", true);
     return;
   }
@@ -15,21 +15,59 @@ export async function crawl(account) {
     openSettings();
     return;
   }
+
+  const accounts = input.split(/[,，\n]+/).map((s) => s.trim()).filter(Boolean);
+  if (!accounts.length) { toast("请输入公众号名称", true); return; }
+
   const btn = $("crawl-btn");
   const old = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "抓取中…";
+
+  const allResults = [];
+  for (let i = 0; i < accounts.length; i++) {
+    const account = accounts[i];
+    btn.textContent = accounts.length > 1 ? `抓取中 ${i + 1}/${accounts.length}` : "抓取中…";
+    try {
+      const res = await fetch(apiUrl(`/api/search?account=${encodeURIComponent(account)}`));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const articles = (data.articles || []).map((a) => ({ ...a, _source: account }));
+      allResults.push(...articles);
+    } catch (err) {
+      toast(`「${account}」抓取失败：${err.message}`, true);
+    }
+  }
+
+  S.setCrawlResults(allResults);
+  btn.disabled = false;
+  btn.textContent = old;
+
+  if (allResults.length) {
+    openResults(accounts.length > 1 ? accounts.join("、") : accounts[0], allResults);
+  } else {
+    toast("未找到任何文章", true);
+  }
+}
+
+export async function loadMoreResults(account) {
+  const currentPage = S.crawlResults._page || 1;
+  const nextPage = currentPage + 1;
   try {
-    const res = await fetch(apiUrl(`/api/search?account=${encodeURIComponent(account)}`));
+    toast(`加载第 ${nextPage} 页…`);
+    const res = await fetch(apiUrl(`/api/search?account=${encodeURIComponent(account)}&page=${nextPage}`));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    S.setCrawlResults(data.articles || []);
+    const newArticles = data.articles || [];
+    if (!newArticles.length) {
+      toast("没有更多结果了");
+      return;
+    }
+    S.crawlResults.push(...newArticles);
+    S.crawlResults._page = nextPage;
     openResults(account, S.crawlResults);
+    toast(`已加载第 ${nextPage} 页，共 ${S.crawlResults.length} 条`);
   } catch (err) {
-    toast(`抓取失败：${err.message}（确认后端 /api 已部署，或在设置中填写后端地址）`, true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = old;
+    toast(`加载失败：${err.message}`, true);
   }
 }
 
@@ -47,8 +85,9 @@ function openResults(account, list) {
       const node = tpl.content.firstElementChild.cloneNode(true);
       const check = node.querySelector(".result-check");
       check.value = i;
+      const source = item._source ? `${item._source} · ` : "";
       node.querySelector(".result-meta").textContent =
-        `${item.account || "未知"} · ${item.publishDate || "日期未知"}`;
+        `${source}${item.account || "未知"} · ${item.publishDate || "日期未知"}`;
       node.querySelector(".result-title").textContent = item.title;
       node.querySelector(".result-summary").textContent = item.summary || "";
       ul.appendChild(node);
@@ -70,7 +109,9 @@ export async function importSelected() {
   const picked = checked.map((c) => S.crawlResults[+c.value]);
   closeAllModals();
   let imported = 0;
+  let skipped = 0;
   const added = [];
+  const existingKeys = new Set(S.articles.map((a) => `${a.account}::${a.title}`));
 
   for (let i = 0; i < picked.length; i++) {
     const item = picked[i];
@@ -80,10 +121,18 @@ export async function importSelected() {
       const res = await fetch(apiUrl(`/api/article?url=${encodeURIComponent(item.sogouLink)}`));
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.content) throw new Error(data.error || "解析失败");
+      const title = data.title || item.title;
+      const account = data.account || item.account || "未知公众号";
+      const key = `${account}::${title}`;
+      if (existingKeys.has(key)) {
+        skipped++;
+        continue;
+      }
+      existingKeys.add(key);
       const article = makeArticle({
-        account: data.account || item.account || "未知公众号",
+        account,
         publishDate: data.publishDate || item.publishDate || today(),
-        title: data.title || item.title,
+        title,
         url: data.url || "",
         content: data.content,
       });
@@ -100,7 +149,8 @@ export async function importSelected() {
   btn.disabled = false;
   btn.textContent = "导入选中";
   if (imported) {
-    toast(`成功导入 ${imported} 篇`);
+    const msg = skipped ? `成功导入 ${imported} 篇，跳过 ${skipped} 篇重复` : `成功导入 ${imported} 篇`;
+    toast(msg);
     selectArticle(added[0].id);
     if (autoAnalyze && hasKey()) {
       for (const a of added) await runSkill("digest", a, a.id === S.activeId ? $("analysis-out") : null);
@@ -108,6 +158,8 @@ export async function importSelected() {
     } else if (autoAnalyze && !hasKey()) {
       toast("已导入，但未配置 API Key，跳过自动分析", true);
     }
+  } else if (skipped) {
+    toast(`${skipped} 篇文章已存在，全部跳过`);
   }
 }
 
