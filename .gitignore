@@ -2,3 +2,17 @@ node_modules/
 .vercel/
 .DS_Store
 *.log
+
+# ─── 命令行采集工具 skill ───
+# 凭证（token + cookie）严禁提交
+skill/credentials.json
+skill/cookie.txt
+# 采集与分析产物：articles_*.json / index_*.xlsx / knowledge_base.json /
+# digest.html 等全部不提交（保留目录占位）。assets/ 模板是源码，照常跟踪。
+skill/output/*
+!skill/output/.gitkeep
+# Python 缓存
+__pycache__/
+*.pyc
+# 本地预览用的临时 launch 配置（如有）
+.claude/launch.json
